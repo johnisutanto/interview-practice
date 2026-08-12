@@ -1,0 +1,8 @@
+node_modules/
+*.log
+.DS_Store
+
+# Screen recordings of practice sessions. Useful to watch back, never to commit.
+recordings/
+*.mov
+*.mp4
