@@ -277,3 +277,58 @@ These eat more interview time than algorithms do.
 
 Walk one example on paper (or out loud) before claiming you are done. The timer's
 85% checkpoint exists for this.
+
+---
+
+## If you want more depth (video, animation, interactive)
+
+Watch *pattern* explanations, not solutions to 01–08, until you have attempted those
+files. Seeing the answer first is how the unaided week stops being unaided.
+
+### Algorithms — start here
+
+1. **[NeetCode](https://neetcode.io/)** — the one that matches this recap. Open the
+   roadmap, stay in **Two Pointers** then **Sliding Window**. Each problem has a
+   short video that draws the pointers moving. The free [Two Pointers playlist](https://www.youtube.com/playlist?list=PLALUz6Z8Un2dnwTPrQ5F2NbmFjuK_r6zH)
+   and the [Roadmap playlist](https://www.youtube.com/playlist?list=PLEN28aeGPfN_nhXftwe_RTkoOuSj5ntZo)
+   are the same content on YouTube. Watch the intro / first easy video in each
+   section; skip the videos for problems you are about to solve here.
+
+2. **[Hello Algo](https://www.hello-algo.com/en/)** — a free book of ~500 animated
+   illustrations with runnable TypeScript. Best if you want to sit and *see* arrays,
+   two pointers, and complexity rather than grind problems. Start at
+   [Complexity Analysis](https://www.hello-algo.com/en/chapter_computational_complexity/time_complexity/)
+   then the array chapter.
+
+3. **Step-through visualizers** (click Next, watch L and R move):
+   - [Two pointers — pair sum and container area](https://ravensmove.com/tools/two-pointers-visualizer)
+     (problems 01 and 02)
+   - [Sliding window — fixed, variable, and at-most-k](https://leetcopilot.dev/tool/sliding-window-visualizer)
+     (problems 04, 05, 06)
+
+[VisuAlgo](https://visualgo.net/en/array) is excellent later this week for sorting
+and binary search. It is weaker on sliding window specifically, so skip it today.
+
+### TypeScript — you already write this at work
+
+You do not need a course. You need the interview-sized surface (arrays, Map, `??`,
+numeric `sort`) to feel automatic again.
+
+1. **[TypeScript in 5 minutes](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes.html)**
+   then click around in the **[Playground](https://www.typescriptlang.org/play)**.
+   Hover a variable to see the inferred type. That hover is the whole skill.
+2. If you want interactive exercises rather than a handbook:
+   **[Total TypeScript — beginners tutorial](https://www.totaltypescript.com/tutorials/beginners-typescript)**
+   (Matt Pocock). Do the first handful of exercises; stop before it becomes a type-system
+   deep dive. You will not be asked to write conditional types in a coding screen.
+
+### A two-hour review, if you want a plan
+
+| Time | What |
+| --- | --- |
+| 25 min | Hello Algo complexity + array chapter (animations) |
+| 20 min | Two-pointers visualizer, pair-sum then container-area modes |
+| 20 min | Sliding-window visualizer, variable-size then at-most-k |
+| 20 min | One NeetCode *intro* video for two pointers, one for sliding window |
+| 15 min | TypeScript playground: `Map`, `??`, `[...nums].sort((a,b) => a-b)` |
+| rest | Close the tabs. Open problem 01. |
