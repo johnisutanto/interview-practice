@@ -40,6 +40,12 @@ No AI. Not for hints, not for syntax, not for "just checking my approach". Weeks
 are where AI-assisted work gets practised properly, and mixing the two now means you learn
 neither. This week is the unaided baseline, and you cannot know what to improve without it.
 
+`.vscode/settings.json` disables Cursor Tab's ghost text for this folder only — other
+projects and windows are unaffected, since workspace settings apply to their own folder.
+Reload the window after opening, then confirm no ghost text appears before starting. Chat
+and agents still work here; the discipline of not asking is yours, but the autocomplete
+that would quietly hand you the answers is gone.
+
 Screen record at least two sessions. Watch one back and note every place you went quiet
 for more than ten seconds. That list is the actual weakness, and it will not match what
 you think your weakness is.

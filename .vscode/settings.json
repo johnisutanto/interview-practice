@@ -1,0 +1,20 @@
+{
+  // Turns off Cursor Tab's inline ghost-text suggestions for THIS FOLDER ONLY, so
+  // practice is genuinely unaided. Other windows and other projects are unaffected,
+  // because workspace settings only apply to the folder that contains them.
+  //
+  // Chat, agents and Cmd+K still work normally here. Only the autocomplete is off.
+  //
+  // Undocumented but staff-recommended on the Cursor community forum. It disables by
+  // language rather than by folder, hence the explicit list. Run "Developer: Reload
+  // Window" after opening the folder, or it will not take effect.
+  //
+  // Deliberately NOT using .cursorignore, which is the documented folder-scoped
+  // mechanism: it also blocks agent file access, which would stop Claude from reading
+  // these files when you want a solution reviewed.
+  "cursor.cpp.disabledLanguages": ["typescript", "javascript", "typescriptreact", "javascriptreact"],
+
+  // Ordinary non-AI IntelliSense stays on. Knowing the standard library by heart is
+  // not what is being tested, and interviewers expect you to have a real editor.
+  "editor.formatOnSave": false
+}
