@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Machinify practice — elevator</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 1.5rem;
+        max-width: 52rem;
+      }
+
+      h1 {
+        font-size: 1.25rem;
+      }
+
+      .layout {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        align-items: flex-start;
+      }
+
+      .shaft {
+        display: flex;
+        flex-direction: column-reverse;
+        width: 8rem;
+        border: 1px solid #333;
+      }
+
+      .floor {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 2.25rem;
+        padding: 0 0.5rem;
+        border-top: 1px solid #ccc;
+      }
+
+      .floor:first-child {
+        border-top: 0;
+      }
+
+      .car {
+        font-weight: 700;
+      }
+
+      .panel {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .calls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+      }
+
+      #log {
+        max-height: 12rem;
+        overflow: auto;
+        padding: 0.5rem;
+        border: 1px solid #ccc;
+        font-family: ui-monospace, monospace;
+        font-size: 0.8rem;
+        white-space: pre-wrap;
+      }
+
+      #status {
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Elevator — practice skeleton (not Monday’s pad)</h1>
+    <p>
+      Provided API + harness below. You only fill in <code>controller.request</code>
+      and <code>controller.tick</code>. No imports. One floor per tick.
+    </p>
+    <p>
+      <strong>Req 1–2:</strong> queue a floor, each tick move toward the head.
+      Arrive, drop that request, idle if empty.
+      <strong>Req 3:</strong> if a new request is on the way, serve it first.
+    </p>
+
+    <div class="layout">
+      <div id="shaft" class="shaft" aria-label="Building shaft"></div>
+      <div class="panel">
+        <p id="status">floor 0 · idle · queue (add one on controller to see it)</p>
+        <div class="calls" id="calls"></div>
+        <p>
+          <button type="button" id="step">Tick</button>
+          <button type="button" id="play">Play</button>
+          <button type="button" id="reset">Reset</button>
+        </p>
+        <div id="log"></div>
+      </div>
+    </div>
+
+    <script>
+      // ============================================================
+      // PROVIDED — treat as Machinify’s documented API. Do not rewrite.
+      // Monday’s names will differ. Same idea: hardware you call, not DOM.
+      // ============================================================
+      const MIN_FLOOR = 0;
+      const MAX_FLOOR = 5;
+
+      const api = {
+        floor: 0,
+
+        getFloor() {
+          return this.floor;
+        },
+
+        getMinFloor() {
+          return MIN_FLOOR;
+        },
+
+        getMaxFloor() {
+          return MAX_FLOOR;
+        },
+
+        moveUp() {
+          if (this.floor >= MAX_FLOOR) {
+            this.log("already at top");
+            return false;
+          }
+          this.floor += 1;
+          this.log("moved up → " + this.floor);
+          render();
+          return true;
+        },
+
+        moveDown() {
+          if (this.floor <= MIN_FLOOR) {
+            this.log("already at bottom");
+            return false;
+          }
+          this.floor -= 1;
+          this.log("moved down → " + this.floor);
+          render();
+          return true;
+        },
+
+        log(message) {
+          const line = String(message);
+          const log = document.getElementById("log");
+          log.textContent = line + "\n" + log.textContent;
+        },
+      };
+
+      // ============================================================
+      // YOUR CODE — this is the interview.
+      // Say the invariant out loud, then the smallest change.
+      // ============================================================
+      const controller = {
+        queue: [],
+        direction: "idle",
+
+        request(floor) {
+          const here = api.getFloor();
+          if (floor < api.getMinFloor() || floor > api.getMaxFloor()) return;
+          if (floor === here) return;
+          if (this.queue.includes(floor)) return;
+
+          if (this.queue.length > 0 && this.onTheWay(floor)) {
+            this.insertOnThisTrip(floor);
+          } else {
+            this.queue.push(floor);
+          }
+          this.syncDirection();
+        },
+
+        // Farthest floor we will still hit before reversing.
+        tripEnd() {
+          const here = api.getFloor();
+          let end = this.queue[0];
+          const goingUp = end > here;
+          for (let i = 1; i < this.queue.length; i += 1) {
+            const f = this.queue[i];
+            if (goingUp) {
+              if (f < end) break;
+              end = f;
+            } else {
+              if (f > end) break;
+              end = f;
+            }
+          }
+          return end;
+        },
+
+        onTheWay(floor) {
+          const here = api.getFloor();
+          const dest = this.queue[0];
+          const end = this.tripEnd();
+          if (dest > here) return floor > here && floor <= end;
+          if (dest < here) return floor < here && floor >= end;
+          return false;
+        },
+
+        // Keep this direction sorted so "call 2 then 4" while going to 5
+        // becomes [2, 4, 5], not [2, 5, 4].
+        insertOnThisTrip(floor) {
+          const here = api.getFloor();
+          const goingUp = this.queue[0] > here;
+          let runLen = 1;
+          for (let i = 1; i < this.queue.length; i += 1) {
+            if (goingUp && this.queue[i] >= this.queue[i - 1]) runLen += 1;
+            else if (!goingUp && this.queue[i] <= this.queue[i - 1]) runLen += 1;
+            else break;
+          }
+          let i = 0;
+          if (goingUp) {
+            while (i < runLen && this.queue[i] < floor) i += 1;
+          } else {
+            while (i < runLen && this.queue[i] > floor) i += 1;
+          }
+          this.queue.splice(i, 0, floor);
+        },
+
+        tick() {
+          if (this.queue.length === 0) {
+            this.direction = "idle";
+            return;
+          }
+          const target = this.queue[0];
+          const here = api.getFloor();
+          if (target < here) api.moveDown();
+          else if (target > here) api.moveUp();
+          if (api.getFloor() === this.queue[0]) this.queue.shift();
+          this.syncDirection();
+        },
+
+        syncDirection() {
+          if (this.queue.length === 0) {
+            this.direction = "idle";
+            return;
+          }
+          const here = api.getFloor();
+          const dest = this.queue[0];
+          this.direction = dest > here ? "up" : dest < here ? "down" : "idle";
+        },
+      };
+
+      /*
+      === your previous version (kept for comparison) ===
+
+      const controller = {
+        queue: [],
+
+        request(floor) {
+          if (floor !== api.getFloor() && floor >= api.getMinFloor() && floor <= api.getMaxFloor()) {
+            if (this.queue.length > 0) {
+              // going up
+              if (this.queue[0] > api.getFloor() && floor >= api.getFloor() && floor <= this.queue[0]) {
+                this.queue = [floor, ...this.queue];
+              }
+              // going down
+              else if (this.queue[0] < api.getFloor() && floor <= api.getFloor() && floor >= this.queue[0]) {
+                this.queue = [floor, ...this.queue];
+              } else {
+                this.queue.push(floor);
+              }
+            } else {
+              this.queue.push(floor);
+            }
+          }
+        },
+
+        tick() {
+          if (this.queue.length === 0) {
+            return;
+          }
+          const targetFloor = this.queue[0];
+          if (targetFloor < api.getFloor()) {
+            api.moveDown();
+          } else if (targetFloor > api.getFloor()) {
+            api.moveUp();
+          } else {
+            this.queue.shift();
+          }
+        },
+      };
+      */
+
+      // ============================================================
+      // HARNESS — buttons, shaft, play. Do not spend Sunday here.
+      // ============================================================
+      const shaft = document.getElementById("shaft");
+      const calls = document.getElementById("calls");
+      const status = document.getElementById("status");
+      let playing = null;
+
+      const render = () => {
+        shaft.replaceChildren();
+        for (let f = MIN_FLOOR; f <= MAX_FLOOR; f += 1) {
+          const row = document.createElement("div");
+          row.className = "floor";
+          const label = document.createElement("span");
+          label.textContent = "F" + f;
+          const car = document.createElement("span");
+          car.className = "car";
+          car.textContent = api.getFloor() === f ? "[■]" : "";
+          row.append(label, car);
+          shaft.append(row);
+        }
+
+        const q = Array.isArray(controller.queue)
+          ? controller.queue.join(",") || "empty"
+          : "(set controller.queue to inspect)";
+        const dir = controller.direction ?? "—";
+        status.textContent =
+          "floor " + api.getFloor() + " · " + dir + " · queue " + q;
+      };
+
+      for (let f = MIN_FLOOR; f <= MAX_FLOOR; f += 1) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = "Call " + f;
+        btn.addEventListener("click", () => {
+          api.log("request(" + f + ")");
+          controller.request(f);
+          render();
+        });
+        calls.append(btn);
+      }
+
+      document.getElementById("step").addEventListener("click", () => {
+        controller.tick();
+        render();
+      });
+
+      document.getElementById("play").addEventListener("click", () => {
+        if (playing) {
+          clearInterval(playing);
+          playing = null;
+          document.getElementById("play").textContent = "Play";
+          return;
+        }
+        playing = setInterval(() => {
+          controller.tick();
+          render();
+        }, 500);
+        document.getElementById("play").textContent = "Pause";
+      });
+
+      document.getElementById("reset").addEventListener("click", () => {
+        if (playing) {
+          clearInterval(playing);
+          playing = null;
+          document.getElementById("play").textContent = "Play";
+        }
+        api.floor = 0;
+        document.getElementById("log").textContent = "";
+        if (Array.isArray(controller.queue)) controller.queue.length = 0;
+        if ("direction" in controller) controller.direction = "idle";
+        api.log("reset");
+        render();
+      });
+
+      render();
+    </script>
+    <!--
+      PART 2 — Claude review. Read after the 35-min drill. Do not paste.
+
+      Pretend this is the PR they drop in. Say how it works, then one comment.
+
+      const queue = [];
+      function request(floor) {
+        if (floor === api.getFloor()) return;
+        queue.push(floor);
+      }
+      function tick() {
+        if (queue.length === 0) return;
+        const dest = Math.max(...queue);
+        if (dest > api.getFloor()) api.moveUp();
+        else if (dest < api.getFloor()) api.moveDown();
+        else queue.shift();
+      }
+
+      Things worth saying out loud (do not treat as a script):
+      - Silent drop when request === current floor: rider already here, or
+        a hall call that should open doors? The code does not say.
+      - Always chases Math.max, not the head of the queue. A call to 1 while
+        going to 5 is ignored until 5 is done — or never, if 5 stays in the
+        array because shift only runs when dest === current *and* dest is max.
+      - Extra complexity vs FIFO: you cannot explain why max is the policy.
+      - One thing it does well: it only moves one floor per tick, uses the API.
+
+      Your real Monday Claude dump will be different. Same muscle: explain,
+      run it if you can, one real comment, stop.
+    -->
+  </body>
+</html>
