@@ -13,7 +13,32 @@
  */
 
 export function twoSumSorted(nums: number[], target: number): [number, number] | null {
-  throw new Error("not implemented");
+  // Empty or a single element cannot form a pair. Handle that before pointers.
+  if (nums.length < 2) return null;
+
+  // `left` / `right` is the interview idiom. `while (left < right)` is a pair;
+  // `<=` would compare an element with itself.
+  let left = 0;
+  let right = nums.length - 1;
+
+  while (left < right) {
+    // Compute the sum once so you can point at it when walking an example out loud.
+    const sum = nums[left]! + nums[right]!;
+    if (sum === target) return [left, right];
+
+    // Why this move, not the other pointer:
+    // The array is sorted. nums[left] is the smallest value still in play.
+    // If sum is already too small, every remaining pair that still uses this left
+    // with a smaller right is even smaller — so this left is dead, throw it away.
+    // Symmetric: if sum is too big, this right cannot be part of any remaining answer.
+    if (sum < target) left++;
+    else right--;
+  }
+
+  // O(n) time: each index is visited at most once.
+  // O(1) extra space: two integers. A hash map is also O(n) time but O(n) space,
+  // and it ignores that the input is sorted, which is why this problem exists.
+  return null;
 }
 
 // ---------------------------------------------------------------------------

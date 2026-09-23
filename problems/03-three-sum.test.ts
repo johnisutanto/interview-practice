@@ -10,7 +10,52 @@
  */
 
 export function threeSum(nums: number[]): number[][] {
-  throw new Error("not implemented");
+  if (nums.length < 3) return [];
+
+  // Copy, then numeric sort. Default sort is lexicographic ([1, 10, 2]), and
+  // sorting in place mutates the caller's array — a footgun in a screen.
+  //
+  // Why the O(n log n) sort is worth it: duplicates become adjacent, so skipping
+  // them is a neighbour check, and the inner pair can use the O(1)-space two-pointer
+  // scan from 01 instead of a hash set.
+  const sorted = [...nums].sort((x, y) => x - y);
+  const results: number[][] = [];
+
+  // `current` is the first number of the triplet. Once it is positive, the remaining
+  // values are also ≥ it, so no triplet can sum to 0 — stop.
+  for (let current = 0; current < sorted.length && sorted[current]! <= 0; current++) {
+    // Skip duplicate first-numbers. The first occurrence already found every triplet
+    // that starts with this value; running it again would emit the same triplets.
+    if (current > 0 && sorted[current] === sorted[current - 1]) continue;
+
+    let left = current + 1;
+    let right = sorted.length - 1;
+
+    while (left < right) {
+      const total = sorted[current]! + sorted[left]! + sorted[right]!;
+
+      if (total === 0) {
+        results.push([sorted[current]!, sorted[left]!, sorted[right]!]);
+        left++;
+        right--;
+        // Same as the outer skip, but for the pair. Without this, [-2, 0, 0, 2, 2]
+        // emits [-2, 0, 2] twice: after the first hit, left still lands on 0 and
+        // right still lands on 2. Skip while the *new* value equals the one you
+        // just used. Skipping before the first hit would drop a valid triplet.
+        while (left < right && sorted[left] === sorted[left - 1]) left++;
+        while (left < right && sorted[right] === sorted[right + 1]) right--;
+      } else if (total < 0) {
+        // Sorted: too small means this left cannot pair with any remaining right.
+        left++;
+      } else {
+        right--;
+      }
+    }
+  }
+
+  // O(n²) time: n choices for `current`, O(n) two-pointer scan each. Sort is n log n
+  // and does not dominate. O(1) extra space besides the output.
+  return results;
 }
 
 // ---------------------------------------------------------------------------
@@ -38,6 +83,8 @@ test("the standard case", () => {
 test("duplicates collapse to one triplet", () => {
   assert.equal(normalise(threeSum([0, 0, 0])), normalise([[0, 0, 0]]));
   assert.equal(normalise(threeSum([0, 0, 0, 0])), normalise([[0, 0, 0]]));
+  // Inner-pair duplicates: the outer skip on `current` is not enough here.
+  assert.equal(normalise(threeSum([-2, 0, 0, 2, 2])), normalise([[-2, 0, 2]]));
 });
 
 test("no triplet sums to zero", () => {

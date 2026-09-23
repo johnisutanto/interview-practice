@@ -14,7 +14,43 @@
  */
 
 export function characterReplacement(s: string, k: number): number {
-  throw new Error("not implemented");
+  if (s.length === 0) return 0;
+
+  const freqs = new Map<string, number>();
+  let left = 0;
+  // Most frequent character count seen in *any* window so far — not necessarily
+  // the current one. It never decreases; see below for why that is still correct.
+  let maxFreq = 0;
+  let best = 0;
+
+  for (let right = 0; right < s.length; right++) {
+    const rightChar = s[right]!;
+    freqs.set(rightChar, (freqs.get(rightChar) ?? 0) + 1);
+    maxFreq = Math.max(maxFreq, freqs.get(rightChar)!);
+
+    // Replacements needed = window length − count of the letter we keep.
+    // Valid when that is ≤ k, i.e. length ≤ maxFreq + k.
+    // `if`, not `while`: we only care about the longest window, so when this one
+    // is invalid we slide left by one (length stays the same as last step) instead
+    // of shrinking smaller. A shorter valid window cannot beat `best`.
+    if (right - left + 1 > maxFreq + k) {
+      const leftChar = s[left]!;
+      freqs.set(leftChar, freqs.get(leftChar)! - 1);
+      left++;
+      // Deliberately not decreasing maxFreq. A stale (too high) maxFreq can only
+      // make us keep a window that is *currently* invalid. That cannot inflate
+      // the answer: any window longer than maxFreq + k is impossible, and we
+      // already earned that maxFreq in some earlier window, so best is already
+      // at least min(n, maxFreq + k). Interviewers ask this more than they ask
+      // you to write the loop.
+    }
+
+    best = Math.max(best, right - left + 1);
+  }
+
+  // O(n) time: left and right each walk s once. O(1) extra space if the alphabet
+  // is A–Z, otherwise O(alphabet).
+  return best;
 }
 
 // ---------------------------------------------------------------------------

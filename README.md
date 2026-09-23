@@ -72,6 +72,29 @@ Eight problems, ordered so each one leans on the last. Do them in order.
 being able to say *why* the window that solved 04 and 05 cannot solve 07 is a better
 signal than solving either.
 
+## Day 3 — hash maps, sets, counting, strings
+
+One problem for now, as a review rather than a full day.
+
+| # | Problem | Pattern |
+| --- | --- | --- |
+| 09 | Group Anagrams | hash map; the key is the actual question |
+
+## Days 4–5 — binary search, intervals, trees, graphs
+
+Three problems each, not the full six in the plan. These are the ones that show up.
+
+| # | Problem | Pattern |
+| --- | --- | --- |
+| 10 | Search in Rotated Sorted Array | binary search; which half is sorted |
+| 11 | Koko Eating Bananas | binary search *on the answer* |
+| 12 | Merge Intervals | sort by start, then linear merge |
+| 13 | Binary Tree Level Order | BFS; snapshot `queue.length` per level |
+| 14 | Number of Islands | grid as graph; flood-fill |
+| 15 | Course Schedule | directed graph; cycle detection |
+
+Day 4 is 10–12. Day 5 is 13–15. Same protocol: say the approach before typing, no AI, stuck ten minutes then ask.
+
 ## Why TypeScript
 
 Committed for six weeks, no splitting. The live Dropbox role is Senior Fullstack Product

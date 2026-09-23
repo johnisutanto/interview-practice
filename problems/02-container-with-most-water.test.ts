@@ -12,7 +12,33 @@
  */
 
 export function maxArea(heights: number[]): number {
-  throw new Error("not implemented");
+  // Empty or a single line cannot form a container.
+  if (heights.length < 2) return 0;
+
+  let left = 0;
+  let right = heights.length - 1;
+  let best = 0;
+
+  while (left < right) {
+    // Record area *before* moving, or the full-width container is skipped.
+    const area = Math.min(heights[left]!, heights[right]!) * (right - left);
+    best = Math.max(best, area);
+
+    // Why move the shorter line, never the taller:
+    // Area is min(height) * width. If you move the taller pointer, width shrinks
+    // and height is still capped by the shorter line, so area cannot increase.
+    // The only candidate that might improve is a taller line replacing the short
+    // one, so that is the pointer you throw away.
+    //
+    // When the two heights are equal, either pointer is fine (this moves right).
+    // Same height, so neither end can beat the current area with a narrower width.
+    if (heights[left]! < heights[right]!) left++;
+    else right--;
+  }
+
+  // O(n) time: each index is visited at most once.
+  // O(1) extra space: two pointers and a running best.
+  return best;
 }
 
 // ---------------------------------------------------------------------------

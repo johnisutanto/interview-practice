@@ -227,6 +227,57 @@ special case, which is why the constraint exists.
 
 **Problems:** 08.
 
+### 5. Binary search (including on the answer)
+
+**Picture.** `lo` and `hi` bound a range that still might contain the answer.
+`mid = lo + Math.floor((hi - lo) / 2)` — not `(lo + hi) / 2`, which can overflow
+in other languages and is a habit interviewers like.
+
+**When the array is rotated.** One of `[lo, mid]` and `[mid, hi]` is sorted.
+Check `nums[lo] <= nums[mid]` to name it. Then ask whether `target` sits inside
+that sorted half; if not, throw the sorted half away.
+
+**When you search the answer.** The index is not in the input. You search a
+numeric range (speed, capacity, threshold) where `feasible(x)` is monotonic:
+if `x` works, `x+1` works. Then binary search that range. Problem 11 is this.
+
+**Loop bound.** `while (lo < hi)` plus `hi = mid` / `lo = mid + 1` is the
+"minimum feasible x" shape. Off-by-one here is the whole exercise.
+
+**Problems:** 10, 11.
+
+### 6. Intervals
+
+Sort by start. Then one scan: if this interval overlaps the last merged one,
+extend the last end; otherwise append. Overlap includes touching endpoints.
+Sorting is why the rest is linear — you never have to look back past the last
+interval.
+
+**Problems:** 12.
+
+### 7. Trees — BFS by level
+
+A queue. At the start of each round, `n = queue.length` is this level. Dequeue
+exactly `n` nodes, enqueue their children. Those children are the next level.
+
+Do not use `for...in` on the queue. Shift from the front (`queue.shift()`) is
+O(n) per call and technically O(n²) for a full tree; for interview trees it is
+what everyone writes. Mention that; do not implement a real deque unless asked.
+
+**Problems:** 13.
+
+### 8. Grids and graphs
+
+A grid is a graph: each cell is a node, 4 neighbours are edges. Flood-fill
+(DFS or BFS) from every unvisited land cell, mark visited, count how many
+times you start a fill.
+
+A course list with prerequisites is a *directed* graph. You can finish iff
+there is no cycle. Kahn (indegree queue) or DFS with a "visiting" vs "done"
+mark. `[a, b]` means b before a: edge `b → a`.
+
+**Problems:** 14, 15.
+
 ---
 
 ## How the eight connect
