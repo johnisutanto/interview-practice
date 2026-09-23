@@ -1,20 +1,50 @@
 {
-  // Turns off Cursor Tab's inline ghost-text suggestions for THIS FOLDER ONLY, so
-  // practice is genuinely unaided. Other windows and other projects are unaffected,
-  // because workspace settings only apply to the folder that contains them.
+  // THIS FOLDER ONLY. Other Cursor windows are unaffected.
+  // Reload Window after opening, or language/Tab changes will not apply.
   //
-  // Chat, agents and Cmd+K still work normally here. Only the autocomplete is off.
-  //
-  // Undocumented but staff-recommended on the Cursor community forum. It disables by
-  // language rather than by folder, hence the explicit list. Run "Developer: Reload
-  // Window" after opening the folder, or it will not take effect.
-  //
-  // Deliberately NOT using .cursorignore, which is the documented folder-scoped
-  // mechanism: it also blocks agent file access, which would stop Claude from reading
-  // these files when you want a solution reviewed.
-  "cursor.cpp.disabledLanguages": ["typescript", "javascript", "typescriptreact", "javascriptreact"],
+  // Cursor Tab
+  "cursor.cpp.disabledLanguages": [
+    "typescript",
+    "javascript",
+    "typescriptreact",
+    "javascriptreact",
+    "html",
+    "css"
+  ],
+  "editor.inlineSuggest.enabled": false,
+  "editor.inlineSuggest.suppressSuggestions": true,
 
-  // Ordinary non-AI IntelliSense stays on. Knowing the standard library by heart is
-  // not what is being tested, and interviewers expect you to have a real editor.
-  "editor.formatOnSave": false
+  // IntelliSense / Emmet — off so practice matches Karat
+  "editor.quickSuggestions": {
+    "other": false,
+    "comments": false,
+    "strings": false
+  },
+  "editor.suggestOnTriggerCharacters": false,
+  "editor.wordBasedSuggestions": "off",
+  "editor.snippetSuggestions": "none",
+  "editor.tabCompletion": "off",
+  "editor.acceptSuggestionOnEnter": "off",
+  "editor.acceptSuggestionOnCommitCharacter": false,
+  "editor.parameterHints.enabled": false,
+  "editor.hover.enabled": false,
+  "editor.suggest.showWords": false,
+  "editor.autoClosingBrackets": "never",
+  "editor.autoClosingQuotes": "never",
+  "editor.autoClosingDelete": "never",
+  "editor.autoSurround": "never",
+  "editor.linkedEditing": false,
+  "editor.formatOnType": false,
+  "editor.formatOnPaste": false,
+  "editor.formatOnSave": false,
+  "html.autoClosingTags": false,
+  "html.suggest.html5": false,
+  "html.autoCreateQuotes": false,
+  "css.completion.triggerPropertyValueCompletion": false,
+  "javascript.suggest.enabled": false,
+  "javascript.suggest.autoImports": false,
+  "javascript.validate.enable": false,
+  "emmet.showExpandedAbbreviation": "never",
+  "emmet.showAbbreviationSuggestions": false,
+  "emmet.triggerExpansionOnTab": false
 }
