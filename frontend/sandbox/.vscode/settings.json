@@ -1,0 +1,44 @@
+{
+  // THIS FOLDER ONLY. Other Cursor windows are unchanged.
+  // After opening this folder: Command Palette → "Developer: Reload Window"
+  //
+  // Cursor Tab (ghost text)
+  "cursor.cpp.disabledLanguages": ["html", "css", "javascript", "typescript"],
+  "editor.inlineSuggest.enabled": false,
+  "editor.inlineSuggest.suppressSuggestions": true,
+
+  // VS Code / Emmet IntelliSense (Karat will not have these)
+  "editor.quickSuggestions": {
+    "other": false,
+    "comments": false,
+    "strings": false
+  },
+  "editor.suggestOnTriggerCharacters": false,
+  "editor.wordBasedSuggestions": "off",
+  "editor.snippetSuggestions": "none",
+  "editor.tabCompletion": "off",
+  "editor.acceptSuggestionOnEnter": "off",
+  "editor.acceptSuggestionOnCommitCharacter": false,
+  "editor.parameterHints.enabled": false,
+  "editor.hover.enabled": false,
+  "editor.suggest.showWords": false,
+  "editor.autoClosingBrackets": "never",
+  "editor.autoClosingQuotes": "never",
+  "editor.autoClosingDelete": "never",
+  "editor.autoSurround": "never",
+  "editor.linkedEditing": false,
+  "editor.formatOnType": false,
+  "editor.formatOnPaste": false,
+  "editor.formatOnSave": false,
+
+  "html.autoClosingTags": false,
+  "html.suggest.html5": false,
+  "html.autoCreateQuotes": false,
+  "css.completion.triggerPropertyValueCompletion": false,
+  "javascript.suggest.enabled": false,
+  "javascript.suggest.autoImports": false,
+  "javascript.validate.enable": false,
+  "emmet.showExpandedAbbreviation": "never",
+  "emmet.showAbbreviationSuggestions": false,
+  "emmet.triggerExpansionOnTab": false
+}

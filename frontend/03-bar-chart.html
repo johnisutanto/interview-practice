@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Drill 3 — bar chart</title>
+    <style>
+      .chart {
+        display: flex;
+        align-items: stretch;
+        gap: 0.5rem;
+        height: 20rem;
+      }
+
+      .col {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        min-width: 0;
+        height: 100%;
+      }
+
+      /* Percent height on .bar is of this wrap, not of the label. */
+      .bar-wrap {
+        display: flex;
+        flex: 1;
+        align-items: flex-end;
+        min-height: 0;
+      }
+
+      .bar {
+        width: 100%;
+        background: #2563eb;
+        border: 1px solid #1e3a8a;
+      }
+
+      .bar:focus {
+        outline: 2px solid #111;
+        outline-offset: 2px;
+      }
+
+      .label {
+        flex-shrink: 0;
+        padding-top: 0.25rem;
+        font-size: 0.75rem;
+        text-align: center;
+      }
+
+      p#tooltip {
+        position: fixed;
+        z-index: 1000;
+        pointer-events: none;
+        margin: 0;
+        padding: 0.25rem 0.5rem;
+        background: #111;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Deploys by week</h1>
+      <p>
+        <button type="button" id="sort">Sort: original</button>
+      </p>
+      <div id="chart" class="chart"></div>
+      <p id="tooltip" hidden></p>
+    </main>
+    <script>
+      const SAMPLE = [
+        { label: "Mon", value: 4 },
+        { label: "Tue", value: 12 },
+        { label: "Wed", value: 7 },
+        { label: "Thu", value: 15 },
+        { label: "Fri", value: 9 },
+        { label: "Sat", value: 2 },
+        { label: "Sun", value: 1 },
+      ];
+
+      // Comparator must return a number, not a boolean. toSorted copies; SAMPLE stays put.
+      const SORTS = [
+        { label: "Sort: original", data: () => SAMPLE },
+        { label: "Sort: desc", data: () => SAMPLE.toSorted((a, b) => b.value - a.value) },
+        { label: "Sort: asc", data: () => SAMPLE.toSorted((a, b) => a.value - b.value) },
+      ];
+
+      let sortIndex = 0;
+      let rows = SORTS[0].data();
+
+      const chart = document.getElementById("chart");
+      const sortButton = document.getElementById("sort");
+      const tooltip = document.getElementById("tooltip");
+
+      const barFrom = (event) => {
+        const el = event.target.closest(".bar");
+        return el && chart.contains(el) ? el : null;
+      };
+
+      const placeTooltip = (clientX, clientY) => {
+        const pad = 12;
+        let left = clientX + pad;
+        let top = clientY + pad;
+        const tw = tooltip.offsetWidth;
+        const th = tooltip.offsetHeight;
+        if (left + tw > window.innerWidth) left = clientX - tw - pad;
+        if (top + th > window.innerHeight) top = clientY - th - pad;
+        tooltip.style.left = `${Math.max(0, left)}px`;
+        tooltip.style.top = `${Math.max(0, top)}px`;
+      };
+
+      const showTooltip = (bar, clientX, clientY) => {
+        tooltip.textContent = `${bar.dataset.label}: ${bar.dataset.value}`;
+        tooltip.hidden = false;
+        placeTooltip(clientX, clientY);
+      };
+
+      const hideTooltip = () => {
+        tooltip.hidden = true;
+      };
+
+      // One set of listeners on the chart. mouseenter does not bubble, so mouseover.
+      chart.addEventListener("mouseover", (event) => {
+        const bar = barFrom(event);
+        if (!bar) return;
+        tooltip.textContent = `${bar.dataset.label}: ${bar.dataset.value}`;
+        tooltip.hidden = false;
+      });
+
+      chart.addEventListener("mousemove", (event) => {
+        const bar = barFrom(event);
+        if (!bar) {
+          hideTooltip();
+          return;
+        }
+        placeTooltip(event.clientX, event.clientY);
+      });
+
+      chart.addEventListener("mouseleave", hideTooltip);
+
+      chart.addEventListener("focusin", (event) => {
+        const bar = barFrom(event);
+        if (!bar) return;
+        const rect = bar.getBoundingClientRect();
+        showTooltip(bar, rect.right, rect.top);
+      });
+
+      chart.addEventListener("focusout", hideTooltip);
+
+      const render = () => {
+        if (rows.length === 0) {
+          const empty = document.createElement("p");
+          empty.textContent = "No data";
+          chart.replaceChildren(empty);
+          hideTooltip();
+          return;
+        }
+
+        const maxValue = Math.max(...rows.map((row) => row.value));
+
+        const cols = rows.map((row) => {
+          const col = document.createElement("div");
+          col.className = "col";
+
+          const wrap = document.createElement("div");
+          wrap.className = "bar-wrap";
+
+          const bar = document.createElement("div");
+          bar.className = "bar";
+          bar.tabIndex = 0;
+          bar.dataset.label = row.label;
+          bar.dataset.value = String(row.value);
+          bar.style.height = `${(row.value / maxValue) * 100}%`;
+
+          const label = document.createElement("div");
+          label.className = "label";
+          label.textContent = row.label;
+
+          wrap.append(bar);
+          col.append(wrap, label);
+          return col;
+        });
+
+        chart.replaceChildren(...cols);
+      };
+
+      sortButton.addEventListener("click", () => {
+        sortIndex = (sortIndex + 1) % SORTS.length;
+        const mode = SORTS[sortIndex];
+        rows = mode.data();
+        sortButton.textContent = mode.label;
+        render();
+      });
+
+      render();
+    </script>
+  </body>
+</html>

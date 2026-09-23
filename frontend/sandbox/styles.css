@@ -1,0 +1,12 @@
+body {
+  font-family: system-ui, sans-serif;
+  margin: 1.5rem;
+}
+
+.container {
+  display: flex;
+  /*flex-direction: column;*/
+  height: 200px;
+  justify-content: space-between;
+  align-items: flex-end;
+}

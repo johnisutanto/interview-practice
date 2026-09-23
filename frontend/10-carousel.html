@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Drill 10 — carousel</title>
+  <style>
+    /*
+      CSS + JS. Karat/browser follow-up after a static layout: one viewport,
+      many slides, index is the source of truth.
+
+      Done when:
+      - Exactly one slide is visible. Width comes from % / flex, not 800px.
+      - Prev / Next move one slide. Wrap: last Next → 0, first Prev → last.
+      - Dots: one per slide, current dot is obvious. Click a dot to jump.
+      - ArrowLeft / ArrowRight when the carousel is focused (tab to it, or
+        listen on the root with tabindex="0").
+      - Caption uses textContent. Do not innerHTML the copy.
+      - Disabled is wrong here — wrapping is the spec. If they later ask
+        "no wrap", then disable Prev on 0 and Next on last and say why.
+      - No autoplay. If they add setInterval, pause on hover/focus or it
+        fails accessibility.
+
+      Say out loud:
+      - translateX(-index * 100%) on the track vs re-rendering one slide.
+        Track + transform keeps CSS in charge; one-slide render is simpler.
+      - Index modulo length. Negative wrap: (i + n) % n, not i % n.
+      - Resize: % of the viewport, not stored pixel widths.
+    */
+
+    .carousel {
+      width: min(36rem, 100%);
+    }
+
+    .viewport {
+      overflow: hidden;
+      border: 1px solid #333;
+    }
+
+    .track {
+      display: flex;
+      /* You set transform from JS. transition is optional polish. */
+    }
+
+    .slide {
+      flex: 0 0 100%;
+      min-height: 10rem;
+      padding: 1rem;
+      box-sizing: border-box;
+    }
+
+    .slide:nth-child(odd) {
+      background: #eee;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      margin-top: 0.75rem;
+    }
+
+    .dots {
+      display: flex;
+      gap: 0.35rem;
+    }
+
+    .dots button[aria-current="true"] {
+      font-weight: 700;
+    }
+
+    #status {
+      margin: 0.5rem 0 0;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1>Carousel</h1>
+    <p id="status" aria-live="polite"></p>
+
+    <div id="carousel" class="carousel" tabindex="0">
+      <div class="viewport">
+        <div id="track" class="track"></div>
+      </div>
+      <div class="controls">
+        <button type="button" id="prev">Prev</button>
+        <button type="button" id="next">Next</button>
+        <div id="dots" class="dots"></div>
+      </div>
+    </div>
+  </main>
+  <script>
+    const SLIDES = [
+      { title: "Inbox", body: "Unread threads for the current user." },
+      { title: "Board", body: "Work items in the selected sprint." },
+      { title: "Scorecard", body: "DORA and friction for this team." },
+      { title: "Incidents", body: "Open pages, newest first." },
+    ];
+
+    const track = document.getElementById("track");
+    const dots = document.getElementById("dots");
+    const status = document.getElementById("status");
+    const carousel = document.getElementById("carousel");
+
+    let index = 0;
+
+    // Render all slides into #track. One node per slide. textContent only.
+    const renderSlides = () => {
+      const slides = SLIDES.map(slide => {
+        const newSlide = document.createElement("div");
+        newSlide.classList.add("slide");
+        newSlide.textContent = `${slide.title}  - ${slide.body}`;
+        return newSlide;
+      });
+      track.replaceChildren(...slides);
+    };
+
+    // Paint current index: transform on #track, aria-current on dots, status text.
+    const paint = () => {
+      track.style.transform = `translateX(-${index * 100}%)`;
+    };
+
+    const go = (next) => {
+      // wrap with (next + SLIDES.length) % SLIDES.length, then paint()
+      index = (next + SLIDES.length) % SLIDES.length;
+      paint();
+    };
+
+    document.getElementById("prev").addEventListener("click", () => {
+      go(index - 1);
+    });
+
+    document.getElementById("next").addEventListener("click", () => {
+      go(index + 1);
+    });
+
+    dots.addEventListener("click", (e) => {
+      // const btn = e.target.closest("button[data-index]");
+    });
+
+    carousel.addEventListener("keydown", (e) => {
+      // ArrowLeft / ArrowRight. Ignore if the event came from a button? or not —
+      // buttons already click. If focus is on the carousel root, arrows should move.
+    });
+
+    renderSlides();
+    paint();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Drill 7 — file tree</title>
+    <style>
+      /*
+        JS + CSS. Nested data + indent. Common Karat/browser follow-up.
+
+        Done when:
+        - TREE renders as a nested list (ul/li), folders and files distinct in CSS
+        - Indent comes from nesting or padding-inline-start, not &nbsp; or px per level
+        - Click a folder row to expand/collapse children; files do nothing (or select)
+        - Expanded folder remembers state if you collapse a parent then reopen
+          (store expanded ids in a Set)
+        - Optional: highlight the selected file with a class
+        - Do not flatten the tree into one list with magic margin-left per depth
+          unless you say why (virtualize). Nested <ul> is the straightforward version.
+      */
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Workspace</h1>
+      <div id="tree"></div>
+    </main>
+    <script>
+      const TREE = {
+        name: "fitcheck",
+        type: "folder",
+        children: [
+          {
+            name: "src",
+            type: "folder",
+            children: [
+              { name: "cli.ts", type: "file" },
+              { name: "types.ts", type: "file" },
+              {
+                name: "judge",
+                type: "folder",
+                children: [
+                  { name: "model.ts", type: "file" },
+                  { name: "model.test.ts", type: "file" },
+                ],
+              },
+            ],
+          },
+          { name: "README.md", type: "file" },
+          { name: "package.json", type: "file" },
+        ],
+      };
+
+      // Recursive render, or a stack. Event delegation on #tree.
+      const tree = document.getElementById("tree");
+
+      const renderNode = (item, parent) => {
+        let newNode = document.createElement("li");
+        newNode.textContent = item.name;
+        parent.append(newNode);
+        if (item.type === "folder") {
+          const childrenNode = document.createElement("ul");
+          item.children.forEach(child => {
+            renderNode(child, childrenNode);
+          });
+          parent.append(childrenNode);
+        }
+        
+      };
+      tree.addEventListener("click", (e) => {
+        const li = e.target.closest("li");
+        if (li) {
+          console.log(`clicking ${li.textContent}`);
+        }
+      });
+
+      renderNode(TREE, tree);
+    </script>
+  </body>
+</html>

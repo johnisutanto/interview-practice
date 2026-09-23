@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Drill 9 — debounce and throttle</title>
+  <style>
+    /*
+      JavaScript-first. Karat/Atlassian ask you to say the difference, then write
+      both. Debounce = wait until quiet (search). Throttle = at most once per
+      window (scroll). Lodash is not allowed.
+
+      Done when:
+      - debounce(fn, wait) returns a function. A burst of calls runs fn once,
+        wait ms after the *last* call. clearTimeout + setTimeout. Preserve args.
+      - The search box uses the debounced function. Keystrokes still increment
+        "raw input"; searchAPI only runs after you pause typing.
+      - throttle(fn, wait) returns a function. During a burst, fn runs at most
+        once per wait ms. Date.now() leading-edge is enough. Preserve args.
+      - The pane's scroll listener uses the throttled function. Raw scroll
+        events stay high; "throttled scroll" stays near (duration / wait).
+      - Counters prove it. If raw === limited, you returned fn unchanged.
+      - No lodash. Do not debounce scroll or throttle search — that is the
+        point of knowing which is which.
+
+      Say out loud, then skip unless they ask:
+      - Leading vs trailing throttle: first call immediately vs last call after
+        the window. Scroll position often wants trailing so the last pixel wins.
+      - debounce.cancel() / clear the timer if the component goes away.
+      - Stale search: a slow first request can resolve after a later query.
+        Ignore the result if query !== the input's current value.
+    */
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    .pane {
+      height: 12rem;
+      overflow: auto;
+      border: 1px solid #333;
+    }
+
+    .pane p {
+      margin: 0;
+      padding: 0.35rem 0.5rem;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .counts {
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1>Debounce vs throttle</h1>
+    <p class="counts">
+      Raw input: <strong id="rawInput">0</strong>
+      · searchAPI: <strong id="apiCalls">0</strong>
+      · raw scroll: <strong id="rawScroll">0</strong>
+      · throttled scroll: <strong id="throttledScroll">0</strong>
+    </p>
+
+    <div class="layout">
+      <section>
+        <h2>Search (debounce)</h2>
+        <label for="q">Filter people</label>
+        <input id="q" type="search" autocomplete="off" />
+        <p id="status" aria-live="polite"></p>
+        <ul id="results"></ul>
+      </section>
+
+      <section>
+        <h2>Scroll (throttle)</h2>
+        <p>Scroll the list. Last throttled top: <strong id="scrollTop">0</strong></p>
+        <div id="pane" class="pane"></div>
+      </section>
+    </div>
+  </main>
+  <script>
+    const PEOPLE = [
+      "Alex Rivera",
+      "Sam Chen",
+      "Jordan Patel",
+      "Riley Brooks",
+      "Casey Nguyen",
+      "Morgan Lee",
+      "Quinn Alvarez",
+      "Avery Shah",
+      "Jamie Ortiz",
+      "Taylor Kim",
+    ];
+
+    const rawInputEl = document.getElementById("rawInput");
+    const apiCallsEl = document.getElementById("apiCalls");
+    const rawScrollEl = document.getElementById("rawScroll");
+    const throttledScrollEl = document.getElementById("throttledScroll");
+    const scrollTopEl = document.getElementById("scrollTop");
+    const input = document.getElementById("q");
+    const status = document.getElementById("status");
+    const results = document.getElementById("results");
+    const pane = document.getElementById("pane");
+
+    let rawInput = 0;
+    let apiCalls = 0;
+    let rawScroll = 0;
+    let throttledScroll = 0;
+
+    /**
+     * Fake network. Resolves to matching names after 200ms.
+     * Do not debounce inside here — debounce the caller.
+     */
+    function searchAPI(query) {
+      apiCalls += 1;
+      apiCallsEl.textContent = String(apiCalls);
+      const q = query.trim().toLowerCase();
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          if (q === "") {
+            resolve(PEOPLE);
+            return;
+          }
+          resolve(PEOPLE.filter((name) => name.toLowerCase().includes(q)));
+        }, 200);
+      });
+    }
+
+    const render = (names) => {
+      status.textContent =
+        names.length === 0 ? "No results" : `${names.length} result(s)`;
+      const items = names.map((name) => {
+        const li = document.createElement("li");
+        li.textContent = name;
+        return li;
+      });
+      results.replaceChildren(...items);
+    };
+
+    // Replace the identity return. Burst of calls → one fn after wait ms of quiet.
+    function debounce(fn, wait) {
+      let timeoutId;
+      return (...args) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          shouldDebounce = false;
+          return fn(...args);
+        }, wait);
+      };
+    }
+
+    // Replace the identity return. Burst of calls → fn at most once per wait ms.
+    function throttle(fn, wait) {
+      let inThrottle;
+      return (...args) => {
+        if (!inThrottle) {
+          fn(...args);
+          inThrottle = true;
+          setTimeout(() => (inThrottle = false), wait);
+        }
+      };
+    }
+
+    const runSearch = (query) => {
+      searchAPI(query).then(render).catch((err) => {
+        status.textContent = err.message;
+      });
+    };
+
+    const debouncedSearch = debounce(runSearch, 300);
+
+    input.addEventListener("input", () => {
+      rawInput += 1;
+      rawInputEl.textContent = String(rawInput);
+      debouncedSearch(input.value);
+    });
+
+    const onThrottledScroll = () => {
+      throttledScroll += 1;
+      throttledScrollEl.textContent = String(throttledScroll);
+      scrollTopEl.textContent = String(Math.round(pane.scrollTop));
+    };
+
+    const throttledOnScroll = throttle(onThrottledScroll, 200);
+
+    pane.addEventListener("scroll", () => {
+      rawScroll += 1;
+      rawScrollEl.textContent = String(rawScroll);
+      throttledOnScroll();
+    });
+
+    for (let i = 1; i <= 80; i += 1) {
+      const row = document.createElement("p");
+      row.textContent = `Row ${i}`;
+      pane.append(row);
+    }
+
+    render(PEOPLE);
+  </script>
+</body>
+
+</html>

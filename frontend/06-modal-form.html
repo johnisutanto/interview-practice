@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Drill 6 — modal + form</title>
+  <style>
+    /*
+      Do not set display:flex on .overlay together with [hidden].
+      hidden is display:none; author display:flex often wins and the overlay
+      never actually hides.
+    */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      align-items: center;
+      justify-content: center;
+      background: rgb(0 0 0 / 0.4);
+    }
+
+    .overlay:not([hidden]) {
+      display: flex;
+    }
+
+    .dialog {
+      width: min(24rem, 90%);
+      padding: 1.25rem;
+      background: #fff;
+    }
+
+    body.modal-open {
+      overflow: hidden;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1>Team</h1>
+    <button type="button" id="open">Invite</button>
+    <ul id="members">
+      <li>Alex</li>
+      <li>Sam</li>
+    </ul>
+  </main>
+
+  <div id="overlay" class="overlay" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+      <h2 id="dialog-title">Invite teammate</h2>
+      <form id="invite">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" required autocomplete="off" />
+        <p id="formError"></p>
+        <button type="submit" id="submit" disabled>Send invite</button>
+        <button type="button" id="cancel">Cancel</button>
+      </form>
+    </div>
+  </div>
+  <script>
+    const overlay = document.getElementById("overlay");
+    const dialog = document.querySelector(".dialog");
+    const openButton = document.getElementById("open");
+    const cancelButton = document.getElementById("cancel");
+    const email = document.getElementById("email");
+    const form = document.getElementById("invite");
+    const submit = document.getElementById("submit");
+    const list = document.getElementById("members");
+    const formError = document.getElementById("formError");
+
+    const state = { open: false, submitting: false };
+
+    const syncSubmitEnabled = () => {
+      submit.disabled = state.submitting || !form.checkValidity();
+    };
+
+    const openDialog = () => {
+      state.open = true;
+      overlay.hidden = false;
+      document.body.classList.add("modal-open");
+      formError.textContent = "";
+      syncSubmitEnabled();
+      email.focus();
+    };
+
+    const closeDialog = () => {
+      state.open = false;
+      overlay.hidden = true;
+      document.body.classList.remove("modal-open");
+      openButton.focus();
+    };
+
+    openButton.addEventListener("click", () => {
+      openDialog();
+    });
+
+    cancelButton.addEventListener("click", () => {
+      if (state.submitting) return;
+      closeDialog();
+    });
+
+    overlay.addEventListener("click", (e) => {
+      if (e.target !== overlay || state.submitting) return;
+      closeDialog();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape" || !state.open || state.submitting) return;
+      closeDialog();
+    });
+
+    form.addEventListener("input", () => {
+      syncSubmitEnabled();
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!form.checkValidity() || state.submitting) return;
+
+      state.submitting = true;
+      syncSubmitEnabled();
+      formError.textContent = "";
+
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
+      state.submitting = false;
+      if (!state.open) {
+        syncSubmitEnabled();
+        return;
+      }
+
+      const item = document.createElement("li");
+      item.textContent = email.value;
+      list.append(item);
+      form.reset();
+      syncSubmitEnabled();
+      closeDialog();
+    });
+
+    /*
+    === your previous version (kept for comparison) ===
+
+    const overlay = document.getElementById("overlay");
+    const dialog = document.getElementsByClassName("dialog")[0];
+    const openButton = document.getElementById("open");
+    const cancelButton = document.getElementById("cancel");
+    const email = document.getElementById("email");
+    const form = document.getElementById('invite');
+    const submit = document.getElementById('submit');
+    const list = document.getElementById('members');
+    const state = { dialogIsOpen: false };
+
+    const toggleDialog = (open) => {
+      state.dialogIsOpen = open;
+      overlay.hidden = !open;
+      overlay.style.pointerEvents = open ? 'auto' : 'none';
+      dialog.hidden = !open;
+      if (open) {
+        email.focus();
+      } else {
+        openButton.focus();
+      }
+    };
+
+    openButton.addEventListener("click", e => {
+      toggleDialog(true);
+    });
+    cancelButton.addEventListener("click", e => {
+      toggleDialog(false);
+    });
+    overlay.addEventListener("click", e => {
+      if (e.target !== overlay) { return; }
+      toggleDialog(false);
+    });
+    dialog.addEventListener("keydown", e => {
+      if (e.key === "Escape") {
+        toggleDialog(false);
+      }
+    });
+    invite.addEventListener('input', () => {
+      submit.disabled = !form.checkValidity();
+    });
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      await new Promise(resolve => setTimeout(resolve, 800));
+      const newMember = document.createElement("li");
+      newMember.textContent = email.value;
+      list.append(newMember);
+      form.reset();
+      toggleDialog(false);
+    });
+    */
+  </script>
+</body>
+
+</html>

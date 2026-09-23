@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Drill 4 — sortable table</title>
+  <style>
+    /*
+        JS + CSS. Looks like a DX scorecard: one source of truth in memory,
+        table is a view.
+      */
+    .table-wrap {
+      max-height: 15rem;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 0.75rem;
+      text-align: left;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background-color: #333;
+      color: white;
+      cursor: pointer;
+      z-index: 1;
+    }
+
+    /* was: padding: 12px on th only */
+
+    tr.selected {
+      background-color: #ffe566;
+    }
+
+    tbody tr {
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1>Team delivery</h1>
+    <label for="filter">Filter</label>
+    <input id="filter" type="search" autocomplete="off" />
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-key="team">Team</th>
+            <th data-key="prs">PRs</th>
+            <th data-key="deploys">Deploys</th>
+          </tr>
+        </thead>
+        <tbody id="body"></tbody>
+      </table>
+    </div>
+    <p id="status" aria-live="polite"></p>
+  </main>
+  <script>
+    const DATA = [
+      { team: "Platform", prs: 42, deploys: 11 },
+      { team: "Growth", prs: 18, deploys: 7 },
+      { team: "Mobile", prs: 27, deploys: 4 },
+      { team: "Data", prs: 9, deploys: 15 },
+      { team: "Infra", prs: 33, deploys: 20 },
+      { team: "Design Systems", prs: 6, deploys: 2 },
+    ];
+
+    // Column order is explicit so Object.entries cannot reshuffle cells.
+    const COLUMNS = ["team", "prs", "deploys"];
+
+    const state = {
+      sortKey: "team",
+      sortDir: 1,
+      searchTerm: "",
+      selectedTeam: null,
+    };
+
+    const tbody = document.getElementById("body");
+    const tableWrap = document.querySelector(".table-wrap");
+    const filter = document.getElementById("filter");
+    const statusEl = document.getElementById("status");
+
+    const compare = (a, b, key, dir = 1) => {
+      const left = a[key];
+      const right = b[key];
+      const cmp =
+        typeof left === "number" && typeof right === "number"
+          ? left - right
+          : String(left).localeCompare(String(right));
+      return cmp * dir;
+    };
+
+    const visibleRows = () => {
+      const q = state.searchTerm.trim().toLowerCase();
+      const filtered = q
+        ? DATA.filter((row) =>
+            COLUMNS.some((key) => String(row[key]).toLowerCase().includes(q)),
+          )
+        : DATA;
+      return filtered.toSorted((a, b) => compare(a, b, state.sortKey, state.sortDir));
+    };
+
+    const render = () => {
+      const rows = visibleRows();
+
+      document.querySelectorAll("th[data-key]").forEach((th) => {
+        if (th.dataset.key === state.sortKey) {
+          th.setAttribute("aria-sort", state.sortDir === 1 ? "ascending" : "descending");
+        } else {
+          th.removeAttribute("aria-sort");
+        }
+      });
+
+      if (rows.length === 0) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = COLUMNS.length;
+        td.textContent = "No teams";
+        tr.append(td);
+        tbody.replaceChildren(tr);
+        statusEl.textContent = "No teams";
+        return;
+      }
+
+      statusEl.textContent = `${rows.length} team(s)`;
+
+      const trs = rows.map((row) => {
+        const tr = document.createElement("tr");
+        tr.dataset.team = row.team;
+        if (row.team === state.selectedTeam) tr.classList.add("selected");
+
+        const cells = COLUMNS.map((key) => {
+          const td = document.createElement("td");
+          td.textContent = row[key];
+          return td;
+        });
+        tr.replaceChildren(...cells);
+        return tr;
+      });
+      tbody.replaceChildren(...trs);
+    };
+
+    tableWrap.addEventListener("click", (e) => {
+      const header = e.target.closest("th");
+      if (header && tableWrap.contains(header)) {
+        const headerKey = header.dataset.key;
+        if (state.sortKey === headerKey) {
+          state.sortDir = -state.sortDir;
+        } else {
+          state.sortKey = headerKey;
+          state.sortDir = 1;
+        }
+        render();
+        return;
+      }
+
+      const tableRow = e.target.closest("tbody tr");
+      if (!tableRow || tableRow.querySelector("[colspan]")) return;
+
+      const team = tableRow.dataset.team;
+      state.selectedTeam = state.selectedTeam === team ? null : team;
+      render();
+    });
+
+    filter.addEventListener("input", (e) => {
+      state.searchTerm = e.target.value;
+      render();
+    });
+
+    render();
+
+    /*
+    === your previous version (kept for comparison) ===
+
+    const state = { sortKey: "team", sortDir: 1, rows: [...DATA], searchTerm: "" };
+    let selectedRow;
+
+    const tbody = document.getElementById("body");
+    const table = document.getElementsByClassName("table-wrap")[0];
+    const filter = document.getElementById("filter");
+    const status = document.getElementById("status");
+    const prepareData = () => {
+      if (!state.searchTerm) {
+        state.rows = DATA;
+      } else {
+        state.rows = DATA.filter(row => row.team.toLowerCase().includes(state.searchTerm.toLowerCase()));
+      }
+      state.rows = state.rows.toSorted((a, b) => compare(a, b, state.sortKey, state.sortDir));
+      if (state.rows.length === 0) {
+        status.textContent = "No teams";
+      }
+    };
+    const renderTable = () => {
+      status.textContent = "";
+      prepareData();
+      const rows = state.rows.map(row => {
+        const tableRow = document.createElement("tr");
+        const columns = Object.entries(row).map(([key, value]) => {
+          const col = document.createElement("td");
+          col.textContent = value;
+          return col;
+        });
+        tableRow.replaceChildren(...columns);
+        return tableRow;
+      });
+      tbody.replaceChildren(...rows);
+    };
+    const clearSelection = () => {
+      if (selectedRow) {
+        selectedRow.classList.remove("selected");
+        selectedRow = null;
+      }
+    }
+    const compare = (a, b, key, dir = 1) => {
+      const left = a[key];
+      const right = b[key];
+      const cmp =
+        typeof left === "number" && typeof right === "number"
+          ? left - right
+          : String(left).localeCompare(String(right));
+      return cmp * dir; // dir is 1 or -1 for reverse
+    };
+
+    table.addEventListener("click", e => {
+      const header = e.target.closest("th");
+      if (header) {
+        clearSelection();
+        const headerKey = header.dataset.key;
+        console.log(`${headerKey}`);
+        if (state.sortKey === headerKey) {
+          state.sortDir = -(state.sortDir);
+        }
+        state.sortKey = headerKey;
+        renderTable();
+        return;
+      }
+      const tableRow = e.target.closest("tr");
+      if (tableRow) {
+        clearSelection();
+        tableRow.classList.add("selected");
+        selectedRow = tableRow;
+      }
+    });
+    filter.addEventListener("input", e => {
+      state.searchTerm = e.target.value;
+      renderTable();
+    });
+    renderTable();
+    */
+  </script>
+</body>
+
+</html>

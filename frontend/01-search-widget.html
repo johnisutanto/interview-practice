@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Drill 1 — search widget (HTML/CSS)</title>
+    <style>
+      /*
+        Baseline was right: page-level flex to center, max-width in rem, no px
+        box. What was missing was structure inside the widget (label, form, ul)
+        and a stacked layout so the list is clearly part of the same control.
+      */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        width: 100%;
+        max-width: 24rem;
+      }
+
+      input {
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+      A placeholder is a hint, not a name. Screen readers and Karat both want a
+      <label for="...">. Wrap in <form> so Enter is a real submit; preventDefault
+      if you are not navigating.
+      <li> is only valid inside <ul> or <ol>. Putting <li> in a <div> renders in
+      Chrome and is still invalid — easy miss, easy to call out.
+    -->
+    <form class="container" action="#" id="searchForm">
+      <label for="searchText">Search</label>
+      <input type="search" id="searchText" autocomplete="off" />
+      <p id="status" aria-live="polite"></p>
+      <ul id="results"></ul>
+    </form>
+    <script>
+      const SAMPLE = ["Board", "Backlog", "Sprint", "Pipeline", "Incident", "Scorecard"];
+      const text = document.getElementById("searchText");
+      const results = document.getElementById("results");
+      const status = document.getElementById("status");
+
+      // includes("") is true for every string, so a cleared box would list
+      // everything — but only after the first input event. Render once on load
+      // so the empty field and a deleted query look the same.
+      const searchFor = (query) => {
+        const q = query.trim().toLowerCase();
+        if (q === "") return SAMPLE;
+        // Case-insensitive: "board" should still hit "Board". Say this out loud.
+        return SAMPLE.filter((item) => item.toLowerCase().includes(q));
+      };
+
+      const render = (query) => {
+        const matches = searchFor(query);
+        status.textContent =
+          matches.length === 0 ? "No results" : `${matches.length} result(s)`;
+
+        const items = matches.map((name) => {
+          const li = document.createElement("li");
+          li.textContent = name; // not innerHTML — API text is untrusted later
+          return li;
+        });
+        results.replaceChildren(...items);
+      };
+
+      document.getElementById("searchForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+      });
+
+      text.addEventListener("input", (e) => {
+        render(e.target.value);
+      });
+
+      render("");
+    </script>
+  </body>
+</html>

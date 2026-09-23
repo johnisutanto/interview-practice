@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Drill 5 — tabs + accordion</title>
+    <style>
+      /*
+        Accordion: JS only flips aria-expanded. CSS animates height.
+        You cannot transition height: auto or the hidden attribute
+        (hidden is display: none; the element never interpolates).
+        grid-template-rows 0fr → 1fr is the current height trick;
+        the inner wrapper needs overflow: hidden.
+      */
+      .tabs [role="tab"] {
+        padding: 0.35rem 0.75rem;
+      }
+
+      .tabs [role="tab"][aria-selected="true"] {
+        background: #111;
+        color: #fff;
+      }
+
+      section[role="tabpanel"] {
+        padding: 0.5rem;
+        border: 1px solid black;
+        background: #fff;
+        color: #111;
+      }
+
+      body {
+        background: #fff;
+        color: #111;
+      }
+
+      .faq-q {
+        display: block;
+        width: 100%;
+        text-align: left;
+        margin-top: 0.35rem;
+      }
+
+      .faq-q[aria-expanded="true"]::after {
+        content: " −";
+      }
+
+      .faq-q[aria-expanded="false"]::after {
+        content: " +";
+      }
+
+      .faq-a {
+        display: grid;
+        grid-template-rows: 0fr;
+        transition: grid-template-rows 0.25s ease;
+      }
+
+      .faq-q[aria-expanded="true"] + .faq-a {
+        grid-template-rows: 1fr;
+      }
+
+      .faq-a-inner {
+        overflow: hidden;
+        min-height: 0;
+      }
+
+      .faq-a-inner p {
+        margin: 0.5rem 0 0.75rem;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .faq-a {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>DX docs</h1>
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" id="tab-overview" aria-selected="true" aria-controls="panel-overview" tabindex="0">
+          Overview
+        </button>
+        <button type="button" role="tab" id="tab-metrics" aria-selected="false" aria-controls="panel-metrics" tabindex="-1">
+          Metrics
+        </button>
+        <button type="button" role="tab" id="tab-faq" aria-selected="false" aria-controls="panel-faq" tabindex="-1">
+          FAQ
+        </button>
+      </div>
+      <section role="tabpanel" id="panel-overview" aria-labelledby="tab-overview">
+        <p>Engineering intelligence for the teams you already have.</p>
+      </section>
+      <section role="tabpanel" id="panel-metrics" aria-labelledby="tab-metrics" hidden>
+        <p>Cycle time, PRs, deploys. Replace this with anything.</p>
+      </section>
+      <section role="tabpanel" id="panel-faq" aria-labelledby="tab-faq" hidden>
+        <div id="faq">
+          <button type="button" class="faq-q" id="faq-q-dxi" aria-expanded="false" aria-controls="faq-a-dxi">
+            What is a DXI score?
+          </button>
+          <div class="faq-a" id="faq-a-dxi" role="region" aria-labelledby="faq-q-dxi">
+            <div class="faq-a-inner">
+              <p>A 1–5 snapshot of developer experience. Treat it as a prompt, not a rank.</p>
+            </div>
+          </div>
+          <button type="button" class="faq-q" id="faq-q-who" aria-expanded="false" aria-controls="faq-a-who">
+            Who sees the data?
+          </button>
+          <div class="faq-a" id="faq-a-who" role="region" aria-labelledby="faq-q-who">
+            <div class="faq-a-inner">
+              <p>Admins and the teams that opted in. Say this; do not invent privacy law.</p>
+            </div>
+          </div>
+          <button type="button" class="faq-q" id="faq-q-export" aria-expanded="false" aria-controls="faq-a-export">
+            Can we export?
+          </button>
+          <div class="faq-a" id="faq-a-export" role="region" aria-labelledby="faq-q-export">
+            <div class="faq-a-inner">
+              <p>CSV from the scorecard. Implementation not required.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <script>
+      const tablist = document.querySelector(".tabs");
+      const tabButtons = [...document.querySelectorAll('[role="tab"]')];
+      const tabPanels = document.querySelectorAll('[role="tabpanel"]');
+
+      const panelIdFor = (button) => button.getAttribute("aria-controls");
+
+      const selectTab = (button) => {
+        const panelId = panelIdFor(button);
+
+        tabButtons.forEach((tab) => {
+          const on = tab === button;
+          tab.setAttribute("aria-selected", String(on));
+          // Roving tabindex: Tab hits the tablist once; arrows move inside it.
+          tab.tabIndex = on ? 0 : -1;
+        });
+
+        tabPanels.forEach((panel) => {
+          panel.hidden = panel.id !== panelId;
+        });
+      };
+
+      tablist.addEventListener("click", (e) => {
+        const button = e.target.closest('[role="tab"]');
+        if (!button || !tablist.contains(button)) return;
+        selectTab(button);
+      });
+
+      tablist.addEventListener("keydown", (e) => {
+        const button = e.target.closest('[role="tab"]');
+        if (!button || !tablist.contains(button)) return;
+
+        const i = tabButtons.indexOf(button);
+        let next = -1;
+        if (e.key === "ArrowRight") next = (i + 1) % tabButtons.length;
+        else if (e.key === "ArrowLeft") next = (i - 1 + tabButtons.length) % tabButtons.length;
+        else if (e.key === "Home") next = 0;
+        else if (e.key === "End") next = tabButtons.length - 1;
+        else return; // do not trap Tab / Space / letters
+
+        e.preventDefault(); // arrows would otherwise scroll the page
+        const target = tabButtons[next];
+        selectTab(target);
+        target.focus();
+      });
+
+      const faq = document.getElementById("faq");
+      faq.addEventListener("click", (e) => {
+        const button = e.target.closest(".faq-q");
+        if (!button || !faq.contains(button)) return;
+        const open = button.getAttribute("aria-expanded") === "true";
+        button.setAttribute("aria-expanded", String(!open));
+      });
+
+      /*
+      === your previous version (tabs only; kept for comparison) ===
+
+      const tabs = document.getElementsByClassName("tabs")[0];
+      const extractId = (id) => id.split("-")[1];
+
+      const state = {
+        activeTab: 0
+      };
+      const TABPANELS = document.querySelectorAll("section[role='tabpanel']");
+      const TABBUTTONS = document.querySelectorAll("button[role='tab']");
+      const TABS = [...TABPANELS].map(panel => extractId(panel.id));
+
+      const renderButtons = (id) => {
+        TABBUTTONS.forEach(button => {
+          button.setAttribute('aria-selected', button.id === `tab-${id}`);
+        });
+      };
+      const renderTabs = (id) => {
+        TABPANELS.forEach(panel => {
+          panel.hidden = panel.id !== `panel-${id}`;
+        });
+      };
+      const handleTabSelection = (e) => {
+        const tabButton = e.target.closest("button[role='tab']");
+        if (tabButton) {
+          const id = extractId(tabButton.id);
+          renderButtons(id);
+          renderTabs(id);
+          state.activeTab = TABS.indexOf(id);
+        }
+      };
+
+      tabs.addEventListener("click", e => {
+        handleTabSelection(e);
+      });
+      tabs.addEventListener("focusin", e => {
+        handleTabSelection(e);
+      });
+      tabs.addEventListener("keydown", e => {
+        const tabButton = e.target.closest("button[role='tab']");
+        if (tabButton) {
+          const id = extractId(tabButton.id);
+          console.log(`key is ${e.key}`);
+          switch(e.key) {
+            case 'ArrowLeft':
+            state.activeTab--;
+            if (state.activeTab < 0) state.activeTab = TABS.length - 1
+            break;
+            case 'ArrowRight':
+            state.activeTab++;
+            if (state.activeTab >= TABS.length) state.activeTab = 0;
+            break;
+          }
+          renderButtons(TABS[state.activeTab]);
+          renderTabs(TABS[state.activeTab]);
+          [...TABBUTTONS][state.activeTab].focus();
+        }
+      });
+      */
+    </script>
+  </body>
+</html>

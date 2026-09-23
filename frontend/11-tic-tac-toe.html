@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Drill 11 — tic-tac-toe</title>
+    <style>
+      /*
+        One state, one render(). Cells are buttons (keyboard + click).
+        Win: 8 lines. Draw: board full and no winner. No moves after over.
+        Width in rem / %, squares via aspect-ratio — no px board size.
+      */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        font-family: system-ui, sans-serif;
+        background: #fff;
+        color: #111;
+        display: flex;
+        justify-content: center;
+        padding: 1.5rem;
+      }
+
+      .game {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        width: min(20rem, 100%);
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .toolbar > :first-child {
+        flex: 1;
+        min-width: 0;
+      }
+
+      #status {
+        margin: 0;
+      }
+
+      .board {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.35rem;
+      }
+
+      .cell {
+        aspect-ratio: 1;
+        width: 100%;
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1;
+        background: #fff;
+        color: #111;
+        border: 2px solid #111;
+        cursor: pointer;
+      }
+
+      .cell:disabled {
+        cursor: default;
+        opacity: 1;
+      }
+
+      .cell.win {
+        background: #ffe566;
+      }
+
+      .cell:focus-visible {
+        outline: 2px solid #111;
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="game">
+      <h1>Tic-tac-toe</h1>
+      <div class="toolbar">
+        <p id="status" aria-live="polite"></p>
+        <button type="button" id="reset">Reset</button>
+      </div>
+      <div class="board" id="board" aria-label="Tic-tac-toe">
+        <button type="button" class="cell" data-i="0"></button>
+        <button type="button" class="cell" data-i="1"></button>
+        <button type="button" class="cell" data-i="2"></button>
+        <button type="button" class="cell" data-i="3"></button>
+        <button type="button" class="cell" data-i="4"></button>
+        <button type="button" class="cell" data-i="5"></button>
+        <button type="button" class="cell" data-i="6"></button>
+        <button type="button" class="cell" data-i="7"></button>
+        <button type="button" class="cell" data-i="8"></button>
+      </div>
+    </main>
+    <script>
+      const LINES = [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [0, 3, 6],
+        [1, 4, 7],
+        [2, 5, 8],
+        [0, 4, 8],
+        [2, 4, 6],
+      ];
+
+      const board = document.getElementById("board");
+      const statusEl = document.getElementById("status");
+      const cells = [...board.querySelectorAll(".cell")];
+
+      const emptyState = () => ({
+        cells: Array(9).fill(""),
+        turn: "X",
+        winner: "",
+        line: [],
+      });
+
+      let state = emptyState();
+
+      const winnerOf = (marks) => {
+        for (const line of LINES) {
+          const [a, b, c] = line;
+          if (marks[a] && marks[a] === marks[b] && marks[b] === marks[c]) {
+            return { player: marks[a], line };
+          }
+        }
+        return null;
+      };
+
+      const render = () => {
+        const over = Boolean(state.winner) || state.cells.every(Boolean);
+        cells.forEach((btn, i) => {
+          const mark = state.cells[i];
+          btn.textContent = mark;
+          btn.classList.toggle("win", state.line.includes(i));
+          btn.disabled = Boolean(mark) || over;
+          btn.setAttribute(
+            "aria-label",
+            mark ? `Cell ${i + 1}, ${mark}` : `Cell ${i + 1}, empty`,
+          );
+        });
+
+        if (state.winner) {
+          statusEl.textContent = `${state.winner} wins`;
+        } else if (state.cells.every(Boolean)) {
+          statusEl.textContent = "Draw";
+        } else {
+          statusEl.textContent = `${state.turn} to play`;
+        }
+      };
+
+      board.addEventListener("click", (e) => {
+        const btn = e.target.closest(".cell");
+        if (!btn || !board.contains(btn)) return;
+        const i = Number(btn.dataset.i);
+        if (state.cells[i] || state.winner) return;
+
+        const next = state.cells.slice();
+        next[i] = state.turn;
+        const win = winnerOf(next);
+        state = {
+          cells: next,
+          turn: state.turn === "X" ? "O" : "X",
+          winner: win ? win.player : "",
+          line: win ? win.line : [],
+        };
+        render();
+      });
+
+      document.getElementById("reset").addEventListener("click", () => {
+        state = emptyState();
+        render();
+      });
+
+      render();
+    </script>
+  </body>
+</html>
