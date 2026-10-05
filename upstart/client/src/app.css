@@ -1,0 +1,85 @@
+:root {
+  font-family: "Iowan Old Style", Palatino, Georgia, serif;
+  color: #1c1917;
+  background: #faf7f2;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  max-width: 36rem;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 4rem;
+}
+
+h1 {
+  font-weight: 500;
+  font-size: 2.4rem;
+  margin: 0;
+}
+
+.lede {
+  color: #57534e;
+}
+
+form {
+  display: grid;
+  gap: 0.8rem;
+  margin: 1.5rem 0 2rem;
+}
+
+label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.95rem;
+}
+
+input,
+textarea,
+button {
+  font: inherit;
+}
+
+input,
+textarea {
+  border: 1px solid #d6d3d1;
+  background: white;
+  padding: 0.55rem 0.65rem;
+}
+
+button {
+  justify-self: start;
+  background: #1c1917;
+  color: #faf7f2;
+  border: 0;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+}
+
+.error {
+  color: #9a3412;
+  margin: 0;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+li {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid #e7e5e4;
+}
+
+li span {
+  color: #57534e;
+}
